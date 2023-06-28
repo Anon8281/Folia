@@ -51,7 +51,7 @@ index d9687722e02dfd4088c7030abbf5008eb0a092c8..62484ebf4550b05182f693a3180bbac5
          TickThread.ensureTickThread(thisEntity, "May not tick entity scheduler asynchronously");
          final List<ScheduledTask> toRun;
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 4e78647f1bba68741eeef08a85caf2d053436472..08a11d18c0f507ee91163b8693b2a1f8fd9856aa 100644
+index c9724639c512075f99bcdb4006b6c8e70b86c700..f47c8369089cae206e23d384d1b1477ff8ba9d66 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
 @@ -2889,6 +2889,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {

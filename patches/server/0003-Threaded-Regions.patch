@@ -17627,7 +17627,7 @@ index 25a5a3b949a0eb632611355e74ccd4865be108ca..1df8d601e41c2ab35921b6a1534fdec6
  
                  itemstack = entityliving2.getMainHandItem();
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d053436472 100644
+index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..c9724639c512075f99bcdb4006b6c8e70b86c700 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
 @@ -166,7 +166,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
@@ -17810,7 +17810,7 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
              return;
          }
          // CraftBukkit end
-@@ -3506,6 +3532,764 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -3506,6 +3532,784 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
          this.portalEntrancePos = original.portalEntrancePos;
      }
  
@@ -18146,7 +18146,27 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
 +            }
 +        }
 +
-+        // TODO any events that can modify go HERE
++        // Add teleport events.
++        CraftEntity craftEntity = getBukkitEntity();
++        Location from = craftEntity.getLocation();
++        // Initialize destination.
++        if (yaw == null) yaw = 0f;
++        if (pitch == null) pitch = 0f;
++        Location to = new Location(destination.getWorld(), pos.x, pos.y, pos.z, yaw, pitch);
++        if (this instanceof ServerPlayer) { // if entity is a player, call PlayerTeleportEvent.
++            // Fire PlayerTeleportEvent.
++            PlayerTeleportEvent tpEvent = new PlayerTeleportEvent((org.bukkit.entity.Player) craftEntity, from, to, cause);
++            Bukkit.getServer().getPluginManager().callEvent(tpEvent);
++            // If event cancelled, abort teleporting.
++            if (tpEvent.isCancelled())
++                return false;
++            // Update destination.
++            to = tpEvent.getTo();
++        }
++        destination = ((CraftWorld) to.getWorld()).getHandle();
++        pos = new Vec3(to.getX(), to.getY(), to.getZ());
++        yaw = to.getYaw();
++        pitch = to.getPitch();
 +
 +        // check for same region
 +        if (destination == this.level()) {
@@ -18575,7 +18595,7 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
      @Nullable
      public Entity changeDimension(ServerLevel destination) {
          // CraftBukkit start
-@@ -3514,6 +4298,11 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -3514,6 +4318,11 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
  
      @Nullable
      public Entity teleportTo(ServerLevel worldserver, PositionImpl location) {
@@ -18587,7 +18607,7 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
          // CraftBukkit end
          // Paper start - fix bad state entities causing dupes
          if (!this.isAlive() || !this.valid) {
-@@ -3597,6 +4386,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -3597,6 +4406,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
          }
      }
  
@@ -18600,7 +18620,7 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
      protected void removeAfterChangingDimensions() {
          this.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION);
      }
-@@ -4041,17 +4836,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -4041,17 +4856,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
  
      // Paper start
      public void startSeenByPlayer(ServerPlayer player) {
@@ -18620,7 +18640,7 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
      }
      // Paper end
  
-@@ -4546,7 +5337,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -4546,7 +5357,8 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
              }
          }
          // Paper end - fix MC-4
@@ -18639,7 +18659,7 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
              this.setBoundingBox(this.makeBoundingBox());
          }
          // Paper end
-@@ -4654,6 +5446,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -4654,6 +5466,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
          return this.removalReason != null;
      }
  
@@ -18652,7 +18672,7 @@ index 92202262eff01ae3bbeff0e6ebdcf26ad613c169..4e78647f1bba68741eeef08a85caf2d0
      @Nullable
      public Entity.RemovalReason getRemovalReason() {
          return this.removalReason;
-@@ -4678,7 +5476,23 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -4678,7 +5496,23 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
  
          if (reason != RemovalReason.UNLOADED_TO_CHUNK) this.getPassengers().forEach(Entity::stopRiding); // Paper - chunk system - don't adjust passenger state when unloading, it's just not safe (and messes with our logic in entity chunk unload)
          this.levelCallback.onRemove(reason);
