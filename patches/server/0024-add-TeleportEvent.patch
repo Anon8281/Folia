@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: anon8281 <anon8281git@gmail.com>
+Date: Tue, 4 Jul 2023 18:21:48 +0300
+Subject: [PATCH] add TeleportEvent
+
+
+diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
+index 27b57db24587337ccdce29e492052ca419863323..0d8bb060dec6063f3c6240f9469f471bb6a3869e 100644
+--- a/src/main/java/net/minecraft/world/entity/Entity.java
++++ b/src/main/java/net/minecraft/world/entity/Entity.java
+@@ -3876,6 +3876,27 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+         }
+ 
+         // TODO any events that can modify go HERE
++        // Add teleport events.
++        CraftEntity craftEntity = getBukkitEntity();
++        Location from = craftEntity.getLocation();
++        // Initialize destination.
++        if (yaw == null) yaw = 0f;
++        if (pitch == null) pitch = 0f;
++        Location to = new Location(destination.getWorld(), pos.x, pos.y, pos.z, yaw, pitch);
++        if (this instanceof ServerPlayer) { // if entity is a player, call PlayerTeleportEvent.
++            // Fire PlayerTeleportEvent.
++            PlayerTeleportEvent tpEvent = new PlayerTeleportEvent((org.bukkit.entity.Player) craftEntity, from, to, cause);
++            Bukkit.getServer().getPluginManager().callEvent(tpEvent);
++            // If event cancelled, abort teleporting.
++            if (tpEvent.isCancelled())
++                return false;
++            // Update destination.
++            to = tpEvent.getTo();
++        }
++        destination = ((CraftWorld) to.getWorld()).getHandle();
++        pos = new Vec3(to.getX(), to.getY(), to.getZ());
++        yaw = to.getYaw();
++        pitch = to.getPitch();
+ 
+         // check for same region
+         if (destination == this.level()) {
